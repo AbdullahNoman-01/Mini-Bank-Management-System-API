@@ -39,3 +39,19 @@ class BankAccount(TimestampedModel):
 
    def __str__(self):
       return f"{self.customer.username} - {self.account_number}"
+
+
+class Transaction(TimestampedModel):
+   DEPOSIT = 'DEPOSIT'
+   WITHDRAWAL = 'WITHDRAWAL'
+   TRANSACTION_TYPE = [
+      ('DEPOSIT', 'Deposit'),
+      ('WITHDRAWAL', 'Withdrawal'),
+   ]
+   account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='transactions')
+   transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE)
+   amount = models.DecimalField(max_digits=12, decimal_places=2,default=0.00)
+   description = models.TextField(blank=True, null=True)
+
+   def __str__(self):
+      return f"{self.transaction_type} - {self.amount} - {self.account.account_number}"                  
