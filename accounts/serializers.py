@@ -9,9 +9,13 @@ class BankAccountSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'account_number', 'balance', 'created_at', 'updated_at']
 
 class TransactionSerializer(serializers.ModelSerializer):
+    account_number = serializers.CharField(
+        source='account.account_number',
+        read_only=True
+    )
     class Meta:
         model = models.Transaction
-        fields = ['id', 'account', 'transaction_type', 'amount', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'account', 'account_number', 'transaction_type', 'amount', 'description', 'created_at', 'updated_at']
         read_only_fields = fields 
 
 class MoneyTransferSerializer(serializers.Serializer):

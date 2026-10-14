@@ -12,6 +12,7 @@ from django.db import transaction
 from .serializers import TransactionSerializer
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
 class BankAccountListCreate_View(generics.ListCreateAPIView):
@@ -145,6 +146,9 @@ class WithdrawalView(APIView):
 class TransactionHistoryView(ListAPIView):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['transaction_type']
 
     def get_queryset(self):
         return Transaction.objects.filter(
