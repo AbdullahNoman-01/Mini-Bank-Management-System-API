@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import BankAccount, Transaction
-from accounts.serializers import BankAccountSerializer, MoneyTransferSerializer,AdminBankAccountSerializer,AdminCustomerSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -15,6 +14,10 @@ from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAdminUser
+from django.utils.dateparse import parse_date
+from rest_framework.exceptions import ValidationError
+from accounts.serializers import BankAccountSerializer, MoneyTransferSerializer,        AdminBankAccountSerializer,AdminCustomerSerializer
+
 
 # Create your views here.
 class BankAccountListCreate_View(generics.ListCreateAPIView):
@@ -153,9 +156,41 @@ class TransactionHistoryView(ListAPIView):
     filterset_fields = ['transaction_type']
 
     def get_queryset(self):
-        return Transaction.objects.filter(
-            account__customer=self.request.user
-        ).select_related('account').order_by('-created_at')
+        queryset = Transaction.objects.filter(
+            account__customer=self.request.user).select_related('account').order_by('-created_at')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        parsed_start = None
+        parsed_end = None
+
+        if start_date:
+            parsed_start = parse_date(start_date)
+            if parsed_start is None:
+                raise ValidationError({
+                    'start_date': 'Use YYYY-MM-DD format.'
+                })
+        if end_date:
+            parsed_end = parse_date(end_date)
+            if parsed_end is None:
+                raise ValidationError({
+                    'end_date': 'Use YYYY-MM-DD format.'
+                })
+        if parsed_start and parsed_end and parsed_start > parsed_end:
+            raise ValidationError({
+                'detail': 'start_date cannot be after end_date.'
+            })
+        if parsed_start:
+            queryset = queryset.filter(
+                created_at__date__gte=parsed_start
+            )
+        if parsed_end:
+            queryset = queryset.filter(
+                created_at__date__lte=parsed_end
+            )
+        return queryset
+
+    
 
 
 
