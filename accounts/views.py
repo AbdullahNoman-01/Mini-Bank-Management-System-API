@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import BankAccount, Transaction
-from accounts.serializers import BankAccountSerializer, MoneyTransferSerializer
+from accounts.serializers import BankAccountSerializer, MoneyTransferSerializer,AdminBankAccountSerializer,AdminCustomerSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -13,6 +13,8 @@ from .serializers import TransactionSerializer
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAdminUser
 
 # Create your views here.
 class BankAccountListCreate_View(generics.ListCreateAPIView):
@@ -279,3 +281,40 @@ class MoneyTransferView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+
+
+User = get_user_model()
+
+
+class AdminCustomerListView(ListAPIView):
+    serializer_class = AdminCustomerSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            is_staff=False,
+            is_superuser=False
+        ).order_by('id')
+
+
+class AdminBankAccountListView(ListAPIView):
+    serializer_class = AdminBankAccountSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return BankAccount.objects.select_related(
+            'customer'
+        ).order_by('-created_at')
+
+
+class AdminTransactionListView(ListAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Transaction.objects.select_related(
+            'account',
+            'account__customer'
+        ).order_by('-created_at')
