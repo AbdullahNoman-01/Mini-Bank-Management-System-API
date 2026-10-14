@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import BankAccount, Transaction
-from accounts.serializers import BankAccountSerializer
+from accounts.serializers import BankAccountSerializer, MoneyTransferSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -150,3 +150,128 @@ class TransactionHistoryView(ListAPIView):
         return Transaction.objects.filter(
             account__customer=self.request.user
         ).select_related('account').order_by('-created_at')
+
+
+
+class MoneyTransferView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, sender_account_id):
+        serializer = MoneyTransferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        receiver_number = serializer.validated_data[
+            'receiver_account_number'
+        ]
+        amount = serializer.validated_data['amount']
+
+        with transaction.atomic():
+
+            # 1. Sender-er nijer account kina verify kora
+            sender_exists = BankAccount.objects.filter(
+                id=sender_account_id,
+                customer=request.user
+            ).exists()
+
+            if not sender_exists:
+                return Response(
+                    {'detail': 'Sender account not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # 2. Receiver account khuje ber kora
+            receiver_id = BankAccount.objects.filter(
+                account_number=receiver_number
+            ).values_list('id', flat=True).first()
+
+            if receiver_id is None:
+                return Response(
+                    {'detail': 'Receiver account not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # 3. Same account-e transfer bondho kora
+            if sender_account_id == receiver_id:
+                return Response(
+                    {
+                        'detail': (
+                            'Cannot transfer money to the same account.'
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 4. Dui account ID order onujayi lock kora
+            locked_accounts = {
+                account.id: account
+                for account in (
+                    BankAccount.objects.select_for_update()
+                    .filter(
+                        id__in=[sender_account_id, receiver_id]
+                    )
+                    .order_by('id')
+                )
+            }
+
+            sender_account = locked_accounts.get(sender_account_id)
+            receiver_account = locked_accounts.get(receiver_id)
+
+            if sender_account is None or receiver_account is None:
+                return Response(
+                    {'detail': 'Account not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # 5. Sender-er balance check kora
+            if sender_account.balance < amount:
+                return Response(
+                    {
+                        'detail': 'Insufficient balance.',
+                        'available_balance': str(
+                            sender_account.balance
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 6. Dui account-er balance update kora
+            sender_account.balance -= amount
+            receiver_account.balance += amount
+
+            sender_account.save(update_fields=['balance'])
+            receiver_account.save(update_fields=['balance'])
+
+            # 7. Sender-er transaction history
+            Transaction.objects.create(
+                account=sender_account,
+                transaction_type='TRANSFER_OUT',
+                amount=amount,
+                description=(
+                    f'Transfer to account '
+                    f'{receiver_account.account_number}'
+                )
+            )
+
+            # 8. Receiver-er transaction history
+            Transaction.objects.create(
+                account=receiver_account,
+                transaction_type='TRANSFER_IN',
+                amount=amount,
+                description=(
+                    f'Transfer from account '
+                    f'{sender_account.account_number}'
+                )
+            )
+
+        # 9. Success response
+        return Response(
+            {
+                'message': 'Money transferred successfully.',
+                'amount': str(amount),
+                'sender_account': sender_account.account_number,
+                'sender_balance': str(sender_account.balance),
+                'receiver_account': receiver_account.account_number,
+                'receiver_balance': str(receiver_account.balance),
+            },
+            status=status.HTTP_200_OK
+        )

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import BankAccountListCreate_View, BankAccountDetailView, AccountBalanceView, DepositView, TransactionHistoryView, WithdrawalView
+from .views import BankAccountListCreate_View, BankAccountDetailView, AccountBalanceView, DepositView, TransactionHistoryView, WithdrawalView, MoneyTransferView
 
 urlpatterns = [
     path('accounts/', BankAccountListCreate_View.as_view(), name='bank_account_list_create'),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('accounts/<int:pk>/deposit/',DepositView.as_view(),name='account-deposit'),
     path('accounts/<int:pk>/withdraw/',WithdrawalView.as_view(),name='account-withdraw'),
     path('accounts/<int:pk>/transactions/', TransactionHistoryView.as_view(),name='account-transactions'),
+    path('accounts/<int:sender_account_id>/transfer/',MoneyTransferView.as_view(),name='money-transfer'),
 ]

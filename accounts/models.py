@@ -47,9 +47,11 @@ class Transaction(TimestampedModel):
    TRANSACTION_TYPE = [
       ('DEPOSIT', 'Deposit'),
       ('WITHDRAWAL', 'Withdrawal'),
+      ('TRANSFER_OUT', 'Transfer Sent'),
+      ('TRANSFER_IN', 'Transfer Received'),
    ]
    account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='transactions')
-   transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE)
+   transaction_type = models.CharField(max_length=15, choices=TRANSACTION_TYPE)
    amount = models.DecimalField(max_digits=12, decimal_places=2,default=0.00)
    description = models.TextField(blank=True, null=True)
 
