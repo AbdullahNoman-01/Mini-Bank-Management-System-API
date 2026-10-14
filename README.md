@@ -6,6 +6,9 @@
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/Database-SQLite%20%7C%20PostgreSQL-4169E1?style=for-the-badge&logo=sqlite&logoColor=white" alt="Database" />
   <img src="https://img.shields.io/badge/Auth-Token_Authentication-FF6F00?style=for-the-badge&logo=json-web-tokens&logoColor=white" alt="Auth" />
+  <a href="https://mini-bank-management-system-api.onrender.com" target="_blank">
+    <img src="https://img.shields.io/badge/Render-Live_API-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Render Deployment" />
+  </a>
   <img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" alt="License" />
 </p>
 
@@ -15,6 +18,15 @@
 </p>
 
 <p align="center">
+  <a href="https://mini-bank-management-system-api.onrender.com" target="_blank">
+    <img src="https://img.shields.io/badge/🚀_Live_Deployment-Access_API_Online-0052cc?style=for-the-badge&logo=fastapi&logoColor=white" alt="Live Demo" />
+  </a>
+  <br>
+  🌐 <b>Live Production API URL:</b> <a href="https://mini-bank-management-system-api.onrender.com" target="_blank"><code>https://mini-bank-management-system-api.onrender.com</code></a>
+</p>
+
+<p align="center">
+  <a href="https://mini-bank-management-system-api.onrender.com" target="_blank">🌐 Live API</a> •
   <a href="#-key-features">Key Features</a> •
   <a href="#-system-architecture">System Architecture</a> •
   <a href="#-api-endpoints-reference">API Endpoints</a> •
@@ -316,16 +328,19 @@ The server will start at `http://127.0.0.1:8000/`.
 
 ## 📬 Quick cURL Test Examples
 
-#### Login & Acquire Token
+> [!TIP]
+> You can test the endpoints locally on `http://127.0.0.1:8000/` or directly against the live deployment at `https://mini-bank-management-system-api.onrender.com/`.
+
+#### Login & Acquire Token (Live API)
 ```bash
-curl -X POST http://127.0.0.1:8000/api/auth/login/ \
+curl -X POST https://mini-bank-management-system-api.onrender.com/api/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{"username": "rakib", "password": "your_password"}'
 ```
 
-#### Transfer Money
+#### Transfer Money (Live API)
 ```bash
-curl -X POST http://127.0.0.1:8000/api/accounts/4/transfer/ \
+curl -X POST https://mini-bank-management-system-api.onrender.com/api/accounts/4/transfer/ \
   -H "Authorization: Token <your_auth_token>" \
   -H "Content-Type: application/json" \
   -d '{"receiver_account_number": "6950755002", "amount": "500.00"}'
